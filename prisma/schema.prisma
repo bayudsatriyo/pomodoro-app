@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  startTime  DateTime  @map("start_time")
+  endTime    DateTime? @map("end_time")
+  focusScore Int?      @map("focus_score")
+  notes      String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@map("sessions")
+}
+
+model HealthEvent {
+  id           String   @id @default(cuid())
+  type         String // posture | drink | stretch | movement
+  timestamp    DateTime @default(now())
+  acknowledged Boolean  @default(false)
+  message      String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("health_events")
+}
+
+model AiMemory {
+  id              String   @id @default(cuid())
+  category        String // habit | weakness | strength | health
+  content         String   @db.Text
+  confidenceScore Float    @default(0.5) @map("confidence_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_memory")
+}
