@@ -65,7 +65,7 @@ export async function getAIIntervention(
         Authorization: `Bearer ${config.glm.apiKey}`,
       },
       body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(30000), // 30 second timeout
+      signal: AbortSignal.timeout(45000), // 45 second timeout
     });
 
     if (!response.ok) {
@@ -118,19 +118,38 @@ export async function analyzePostureVision(imageUrl: string): Promise<string> {
     const generalEndpoint =
       "https://api.z.ai/api/coding/paas/v4/chat/completions";
 
-    const response = await fetch(generalEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.glm.apiKey}`,
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(15000),
-    });
+    const fetchWithTimeout = async (timeoutMs: number) =>
+      fetch(generalEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.glm.apiKey}`,
+        },
+        body: JSON.stringify(requestBody),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[GLM Vision] Error:", response.status, errorText);
+    let response: Response | null = null;
+    let lastError: unknown = null;
+
+    for (const timeoutMs of [60000, 90000]) {
+      try {
+        response = await fetchWithTimeout(timeoutMs);
+        if (response.ok) {
+          break;
+        }
+
+        const errorText = await response.text();
+        console.error("[GLM Vision] Error:", response.status, errorText);
+        return "Tidak bisa menganalisis postur.";
+      } catch (error) {
+        lastError = error;
+        console.error("[GLM Vision] Retry due to error:", error);
+      }
+    }
+
+    if (!response) {
+      console.error("[GLM Vision] Failed after retries:", lastError);
       return "Tidak bisa menganalisis postur.";
     }
 

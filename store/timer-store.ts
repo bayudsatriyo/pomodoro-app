@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { config } from "@/config";
+import { usePomodoroSettingsStore } from "@/store/pomodoro-settings-store";
 
 export type TimerStatus = "idle" | "running" | "paused" | "break";
 export type SessionType = "work" | "shortBreak" | "longBreak";
+
+const getCurrentSettings = () => usePomodoroSettingsStore.getState().settings;
 
 interface TimerState {
   // Timer state
@@ -23,7 +26,7 @@ interface TimerState {
 
 export const useTimerStore = create<TimerState>((set) => ({
   // Initial state
-  timeRemaining: config.app.workDuration, // 10 seconds for testing
+  timeRemaining: config.app.workDuration,
   status: "idle",
   sessionType: "work",
   sessionCount: 0,
@@ -37,10 +40,14 @@ export const useTimerStore = create<TimerState>((set) => ({
     set((state) => ({ sessionCount: state.sessionCount + 1 })),
   setCurrentSessionId: (id) => set({ currentSessionId: id }),
   reset: () =>
-    set({
-      timeRemaining: config.app.workDuration, // 10 seconds for testing
-      status: "idle",
-      sessionType: "work",
-      currentSessionId: null,
+    set(() => {
+      const settings = getCurrentSettings();
+
+      return {
+        timeRemaining: settings.workDuration,
+        status: "idle",
+        sessionType: "work",
+        currentSessionId: null,
+      };
     }),
 }));

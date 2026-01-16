@@ -6,10 +6,12 @@ import { useHealthStore } from "@/store/health-store";
 import { config } from "@/config";
 import { soundManager } from "@/lib/sound";
 import { createHealthEvent } from "@/lib/storage";
+import { usePomodoroSettingsStore } from "@/store/pomodoro-settings-store";
 
 export default function PostureMonitor() {
   const { status, timeRemaining, sessionType, currentSessionId } = useTimerStore();
   const { addActiveReminder, setCameraStatus } = useHealthStore();
+  const { settings } = usePomodoroSettingsStore();
 
   const hasCheckedRef = useRef(false); // Track if we've already checked
   const previousSessionIdRef = useRef<string | null>(null);
@@ -22,11 +24,7 @@ export default function PostureMonitor() {
       previousSessionIdRef.current = currentSessionId;
     }
 
-    if (
-      !config.app.postureCheckEnabled ||
-      status !== "running" ||
-      sessionType !== "work"
-    ) {
+    if (status !== "running" || sessionType !== "work") {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -34,8 +32,12 @@ export default function PostureMonitor() {
       return;
     }
 
+    if (!config.app.postureCheckEnabled) {
+      return;
+    }
+
     const triggerTime = Math.max(
-      config.app.workDuration - config.app.postureCheckInterval,
+      settings.workDuration - settings.postureCheckInterval,
       0
     );
 

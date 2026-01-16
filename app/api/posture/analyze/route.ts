@@ -41,29 +41,23 @@ export async function POST(request: NextRequest) {
     // 6. Analyze with GLM vision
     const analysis = await analyzePostureVision(imageUrl);
 
-    // 7. Determine severity based on keywords
-    const lowerAnalysis = analysis.toLowerCase();
+    // 7. Determine severity based on label
+    const labelMatch = analysis.match(/LABEL\s*:\s*(GOOD|WARNING|BAD)/i);
+    const normalizedLabel = labelMatch?.[1]?.toLowerCase();
     let severity: "good" | "warning" | "bad" = "good";
 
-    if (
-      lowerAnalysis.includes("buruk") ||
-      lowerAnalysis.includes("bungkuk") ||
-      lowerAnalysis.includes("salah") ||
-      lowerAnalysis.includes("bahaya")
-    ) {
+    if (normalizedLabel === "bad") {
       severity = "bad";
-    } else if (
-      lowerAnalysis.includes("kurang") ||
-      lowerAnalysis.includes("perhatikan") ||
-      lowerAnalysis.includes("perbaiki")
-    ) {
+    } else if (normalizedLabel === "warning") {
       severity = "warning";
     }
+
+    const cleanedAnalysis = analysis.replace(/LABEL\s*:\s*(GOOD|WARNING|BAD)\s*/i, "").trim();
 
     // 8. Return response
     return NextResponse.json({
       success: true,
-      analysis,
+      analysis: cleanedAnalysis,
       severity,
     });
   } catch (error) {

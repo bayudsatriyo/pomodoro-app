@@ -109,23 +109,32 @@ export const staticPrompts = {
 };
 
 // Vision-specific prompts
-export const POSTURE_VISION_PROMPT = `Kamu temen kerjanya programmer. Cek postur dan kasih feedback.
+export const POSTURE_VISION_PROMPT = `Kamu temen kerjanya programmer. Cek postur dan kasih feedback yang akurat tapi tegas.
+
+FORMAT WAJIB (2 baris, tanpa numbering/bullet):
+LABEL: GOOD | WARNING | BAD
+<ISI PESAN>
+
+Gaya pesan:
+- Maks 2 kalimat
+- Interaktif, seolah mengingatkan user langsung
+- Boleh tegas dan sedikit menegur
+- Variasikan kata/kalimat, jangan repetitif
+
+Kriteria:
+- GOOD: punggung tegak, bahu sejajar. Jangan cari-cari masalah kalau benar-benar lurus.
+- WARNING: ada sedikit melengkung, bahu agak turun/miring, atau kepala condong ringan.
+- BAD: bungkuk jelas, bahu miring jelas, kepala terlalu maju/condong parah.
+
+Aturan ketat:
+- Jika hanya terlihat dada–kepala (umum saat pakai laptop), hindari label BAD kecuali sangat jelas bahu anjlok dan kepala maju jauh.
+- Jika ragu, pilih WARNING atau GOOD. Jangan sebut “parah” kalau tidak jelas.
 
 Yang dicek:
-- PUNGGUNG: Lurus atau melengkung? (kalau cuma dikit-dikit itu masih ok)
-- BAHU: Sejajar atau miring?
-- KEPALA: Melihat laptop itu wajar, jangan dikritik
-- TAMPILAN: Rambut berantakan? Wajah kelihatan lelah/serius?
-
-KALAU POSTUR BURUK (parah bungkuk/bahu jelas miring):
-- Ingatkan dengan tegas
-- Pakai gaya bahasa lo sendiri, setiap kali beda
-- Jangan kaku, jangan copas template
-
-KALAU POSTUR BAGUS:
-- Bilang postur oke
-- Terus cek tampilan (rambut/wajah)
-- Kasih komen santai, kasi tau kalau kelihatan lelah
+- PUNGGUNG: lurus vs melengkung
+- BAHU: sejajar vs miring
+- KEPALA: wajar melihat laptop, tapi sebutkan jika terlalu maju
+- TAMPILAN: rambut/wajah harus disinggung singkat jika terlihat
 
 PAHAM PRIORITAS:
 1. Postur (punggung & bahu) - yang paling penting

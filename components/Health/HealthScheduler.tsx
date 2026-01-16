@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { useHealthStore } from "@/store/health-store";
-import { useTimerStore } from "@/store/timer-store";
+import { useTimerStore, type TimerStatus } from "@/store/timer-store";
 import { createHealthEvent } from "@/lib/storage";
 import { soundManager } from "@/lib/sound";
-import { config } from "@/config";
+import { usePomodoroSettingsStore } from "@/store/pomodoro-settings-store";
 
 export default function HealthScheduler() {
   const {
@@ -16,34 +16,39 @@ export default function HealthScheduler() {
     setLastStretchReminder,
   } = useHealthStore();
   const { status, timeRemaining, sessionType } = useTimerStore();
+  const { settings } = usePomodoroSettingsStore();
+  const previousStatusRef = useRef<TimerStatus>("idle");
 
   useEffect(() => {
+    const wasRunning = previousStatusRef.current === "running";
+    const isRunning = status === "running";
+
+    if (isRunning && !wasRunning) {
+      const now = Date.now();
+      setLastHydrationReminder(now);
+      setLastStretchReminder(now);
+      previousStatusRef.current = status;
+      return;
+    }
+
+    previousStatusRef.current = status;
+
     if (status !== "running" || sessionType !== "work") {
+      return;
+    }
+
+    if (!lastHydrationReminder || !lastStretchReminder) {
       return;
     }
 
     const now = Date.now();
 
-    if (!lastHydrationReminder) {
-      setLastHydrationReminder(now);
-    }
-
-    if (!lastStretchReminder) {
-      setLastStretchReminder(now);
-    }
-
-    if (
-      lastHydrationReminder &&
-      now - lastHydrationReminder >= config.app.hydrationReminderInterval * 1000
-    ) {
+    if (now - lastHydrationReminder >= settings.hydrationReminderInterval * 1000) {
       triggerHydrationReminder();
       setLastHydrationReminder(now);
     }
 
-    if (
-      lastStretchReminder &&
-      now - lastStretchReminder >= config.app.stretchReminderInterval * 1000
-    ) {
+    if (now - lastStretchReminder >= settings.stretchReminderInterval * 1000) {
       triggerStretchReminder();
       setLastStretchReminder(now);
     }
@@ -55,6 +60,8 @@ export default function HealthScheduler() {
     lastStretchReminder,
     setLastHydrationReminder,
     setLastStretchReminder,
+    settings.hydrationReminderInterval,
+    settings.stretchReminderInterval,
   ]);
 
   const triggerHydrationReminder = () => {
