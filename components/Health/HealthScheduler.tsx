@@ -5,38 +5,57 @@ import { useHealthStore } from "@/store/health-store";
 import { useTimerStore } from "@/store/timer-store";
 import { createHealthEvent } from "@/lib/storage";
 import { soundManager } from "@/lib/sound";
+import { config } from "@/config";
 
 export default function HealthScheduler() {
-  const { addActiveReminder } = useHealthStore();
-  const { status, timeRemaining } = useTimerStore();
-
-  const hydrationTriggeredRef = useRef(false);
-  const stretchTriggeredRef = useRef(false);
+  const {
+    addActiveReminder,
+    lastHydrationReminder,
+    lastStretchReminder,
+    setLastHydrationReminder,
+    setLastStretchReminder,
+  } = useHealthStore();
+  const { status, timeRemaining, sessionType } = useTimerStore();
 
   useEffect(() => {
-    // Reset triggers when timer starts
-    if (status === "running") {
-      hydrationTriggeredRef.current = false;
-      stretchTriggeredRef.current = false;
-    }
-
-    // Only process if running
-    if (status !== "running") {
+    if (status !== "running" || sessionType !== "work") {
       return;
     }
 
-    // Trigger hydration reminder at 10 seconds remaining
-    if (timeRemaining === 10 && !hydrationTriggeredRef.current) {
-      hydrationTriggeredRef.current = true;
-      triggerHydrationReminder();
+    const now = Date.now();
+
+    if (!lastHydrationReminder) {
+      setLastHydrationReminder(now);
     }
 
-    // Trigger stretch reminder at 0 seconds (timer complete)
-    if (timeRemaining === 0 && !stretchTriggeredRef.current) {
-      stretchTriggeredRef.current = true;
-      triggerStretchReminder();
+    if (!lastStretchReminder) {
+      setLastStretchReminder(now);
     }
-  }, [status, timeRemaining]);
+
+    if (
+      lastHydrationReminder &&
+      now - lastHydrationReminder >= config.app.hydrationReminderInterval * 1000
+    ) {
+      triggerHydrationReminder();
+      setLastHydrationReminder(now);
+    }
+
+    if (
+      lastStretchReminder &&
+      now - lastStretchReminder >= config.app.stretchReminderInterval * 1000
+    ) {
+      triggerStretchReminder();
+      setLastStretchReminder(now);
+    }
+  }, [
+    status,
+    timeRemaining,
+    sessionType,
+    lastHydrationReminder,
+    lastStretchReminder,
+    setLastHydrationReminder,
+    setLastStretchReminder,
+  ]);
 
   const triggerHydrationReminder = () => {
     const message = "Jangan lupa minum air! Hydration itu penting biar tetap fokus.";

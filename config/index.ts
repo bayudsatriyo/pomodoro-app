@@ -10,22 +10,22 @@ export const config = {
     credentials: process.env.GCS_CREDENTIALS || "",
   },
   app: {
-    // TESTING MODE: All values in SECONDS for quick testing
-    // For production, change to minutes and multiply by 60 in components
+    // PRODUCTION MODE: All values in SECONDS
+    // (minutes × 60) for human-friendly durations
 
     // Timer defaults (in SECONDS)
-    workDuration: 30, // 30 seconds for testing
-    shortBreakDuration: 10, // 10 seconds
-    longBreakDuration: 10, // 10 seconds
+    workDuration: 25 * 60, // 25 minutes
+    shortBreakDuration: 5 * 60, // 5 minutes
+    longBreakDuration: 15 * 60, // 15 minutes
     sessionsUntilLongBreak: 4,
 
     // Health reminder intervals (in SECONDS)
-    postureReminderInterval: 30, // 30 seconds (DISABLED in HealthScheduler)
-    hydrationReminderInterval: 30, // 30 seconds
-    stretchReminderInterval: 30, // 30 seconds
+    postureReminderInterval: 10 * 60, // 10 minutes
+    hydrationReminderInterval: 30 * 60, // 30 minutes
+    stretchReminderInterval: 60 * 60, // 60 minutes
 
     // Posture check settings (vision-based)
-    postureCheckInterval: 5, // 5 seconds for testing - triggers at 5s mark
+    postureCheckInterval: 10 * 60, // 10 minutes after session start
     postureCheckEnabled: true, // Enable/disable posture checking
 
     // Debug mode
