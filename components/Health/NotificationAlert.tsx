@@ -22,7 +22,9 @@ export default function NotificationAlert() {
   useEffect(() => {
     if (activeReminders.length > 0) {
       const latestReminder = activeReminders[activeReminders.length - 1];
-      soundManager.playNotification();
+      if (latestReminder.type !== "posture" && !soundManager.isPosturePriorityActive()) {
+        soundManager.playNotification();
+      }
     }
   }, [activeReminders.length]);
 

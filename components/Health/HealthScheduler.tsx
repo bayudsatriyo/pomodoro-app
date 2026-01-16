@@ -51,8 +51,10 @@ export default function HealthScheduler() {
     });
 
     // Play sound notification and speak
-    soundManager.playNotification();
-    soundManager.speak(message);
+    if (!soundManager.isPosturePriorityActive()) {
+      soundManager.playNotification();
+      soundManager.speak(message);
+    }
   };
 
   const triggerStretchReminder = () => {
@@ -68,8 +70,10 @@ export default function HealthScheduler() {
     });
 
     // Play sound notification and speak
-    soundManager.playNotification();
-    soundManager.speak(message);
+    if (!soundManager.isPosturePriorityActive()) {
+      soundManager.playNotification();
+      soundManager.speak(message);
+    }
   };
 
   // Hidden component - no UI

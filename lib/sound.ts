@@ -5,6 +5,7 @@
 class SoundManager {
   private audioContext: AudioContext | null = null;
   private speechSynth: SpeechSynthesis | null = null;
+  private posturePriorityActive = false;
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -54,6 +55,10 @@ class SoundManager {
    * Notification beep (for health reminders)
    */
   playNotification() {
+    if (this.posturePriorityActive) {
+      return;
+    }
+
     this.playTone([600], [0.15], 0.3);
   }
 
@@ -75,6 +80,7 @@ class SoundManager {
    * Posture warning - urgent alert
    */
   playPostureWarning() {
+    this.setPosturePriority(1200);
     // Urgent beep: higher frequency, longer duration
     this.playTone([800, 900, 800], [0.15, 0.15, 0.3], 0.4);
   }
@@ -83,8 +89,24 @@ class SoundManager {
    * Posture good - gentle chime (optional)
    */
   playPostureGood() {
+    this.setPosturePriority(1200);
     // Gentle ascending chime
     this.playTone([500, 600], [0.1, 0.15], 0.2);
+  }
+
+  /**
+   * Temporarily prioritize posture audio over other reminders.
+   */
+  private setPosturePriority(durationMs: number) {
+    this.posturePriorityActive = true;
+
+    setTimeout(() => {
+      this.posturePriorityActive = false;
+    }, durationMs);
+  }
+
+  isPosturePriorityActive() {
+    return this.posturePriorityActive;
   }
 
   /**

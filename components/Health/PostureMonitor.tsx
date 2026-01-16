@@ -8,16 +8,25 @@ import { soundManager } from "@/lib/sound";
 import { createHealthEvent } from "@/lib/storage";
 
 export default function PostureMonitor() {
-  const { status, timeRemaining } = useTimerStore();
+  const { status, timeRemaining, sessionType, currentSessionId } = useTimerStore();
   const { addActiveReminder, setCameraStatus } = useHealthStore();
 
   const hasCheckedRef = useRef(false); // Track if we've already checked
-  const previousStatusRef = useRef<"idle" | "running" | "paused" | "break">("idle");
+  const previousSessionIdRef = useRef<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ONE-TIME posture check at 5 seconds remaining
+  // ONE-TIME posture check per work session
   useEffect(() => {
-    if (!config.app.postureCheckEnabled || status !== "running") {
+    if (currentSessionId && currentSessionId !== previousSessionIdRef.current) {
+      hasCheckedRef.current = false;
+      previousSessionIdRef.current = currentSessionId;
+    }
+
+    if (
+      !config.app.postureCheckEnabled ||
+      status !== "running" ||
+      sessionType !== "work"
+    ) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -25,14 +34,12 @@ export default function PostureMonitor() {
       return;
     }
 
-    // Reset hasCheckedRef only when transitioning to running from non-running
-    if (status === "running" && previousStatusRef.current !== "running") {
-      hasCheckedRef.current = false;
-    }
-    previousStatusRef.current = status;
+    const triggerTime = Math.max(
+      config.app.workDuration - config.app.postureCheckInterval,
+      0
+    );
 
-    // Check if we should trigger posture check (at 15 seconds remaining = 5s after start)
-    if (timeRemaining === 15 && !hasCheckedRef.current) {
+    if (timeRemaining === triggerTime && !hasCheckedRef.current) {
       hasCheckedRef.current = true;
       // Small delay to trigger check
       timeoutRef.current = setTimeout(() => {
@@ -46,7 +53,7 @@ export default function PostureMonitor() {
         timeoutRef.current = null;
       }
     };
-  }, [status, timeRemaining]);
+  }, [status, timeRemaining, sessionType, currentSessionId]);
 
   /**
    * Capture image from camera (on-demand)

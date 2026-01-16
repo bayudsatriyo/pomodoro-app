@@ -14,9 +14,9 @@ export const config = {
     // For production, change to minutes and multiply by 60 in components
 
     // Timer defaults (in SECONDS)
-    workDuration: 20, // 20 seconds for testing
+    workDuration: 30, // 30 seconds for testing
     shortBreakDuration: 10, // 10 seconds
-    longBreakDuration: 15, // 15 seconds
+    longBreakDuration: 10, // 10 seconds
     sessionsUntilLongBreak: 4,
 
     // Health reminder intervals (in SECONDS)

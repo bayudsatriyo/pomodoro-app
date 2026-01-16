@@ -41,10 +41,13 @@ export default function PomodoroTimer() {
   }, []);
 
   const handleSessionComplete = () => {
-    soundManager.playSessionComplete();
+    const { sessionType: currentType, sessionCount: currentCount } =
+      useTimerStore.getState();
+
     setStatus("idle");
 
-    if (sessionType === "work") {
+    if (currentType === "work") {
+      soundManager.playSessionComplete();
       // End work session
       const sessionId = useTimerStore.getState().currentSessionId;
       if (sessionId) {
@@ -57,7 +60,7 @@ export default function PomodoroTimer() {
 
       // Determine next break type
       const nextBreakType =
-        (sessionCount + 1) % config.app.sessionsUntilLongBreak === 0
+        (currentCount + 1) % config.app.sessionsUntilLongBreak === 0
           ? "longBreak"
           : "shortBreak";
 
@@ -67,11 +70,13 @@ export default function PomodoroTimer() {
           ? config.app.longBreakDuration
           : config.app.shortBreakDuration;
       setTimeRemaining(breakDuration); // Already in seconds
-    } else {
-      // End break
       soundManager.playBreakEnd();
+    } else {
+      // End break -> back to work (manual start)
+      soundManager.playSessionComplete();
       setSessionType("work");
       setTimeRemaining(config.app.workDuration); // Already in seconds
+      setCurrentSessionId(null);
     }
   };
 
@@ -83,7 +88,7 @@ export default function PomodoroTimer() {
     }
 
     setStatus("running");
-    workerRef.current?.postMessage({ action: "start", time: timeRemaining });
+    workerRef.current?.postMessage({ action: "start", time: Math.max(timeRemaining, 1) });
   };
 
   const handlePause = () => {
@@ -103,6 +108,12 @@ export default function PomodoroTimer() {
         : config.app.longBreakDuration;
 
     setTimeRemaining(duration); // Already in seconds
+    setCurrentSessionId(null);
+  };
+
+  const handleSkip = () => {
+    workerRef.current?.postMessage({ action: "reset" });
+    handleSessionComplete();
   };
 
   // Format time display
@@ -179,6 +190,9 @@ export default function PomodoroTimer() {
         )}
         <button onClick={handleReset} className="btn-tertiary">
           RESET
+        </button>
+        <button onClick={handleSkip} className="btn-tertiary">
+          {sessionType === "work" ? "SKIP WORK" : "SKIP BREAK"}
         </button>
       </div>
 
