@@ -18,6 +18,8 @@ export default function HealthScheduler() {
   const { status, timeRemaining, sessionType } = useTimerStore();
   const { settings } = usePomodoroSettingsStore();
   const previousStatusRef = useRef<TimerStatus>("idle");
+  const previousSessionTypeRef = useRef(sessionType);
+  const breakTriggeredRef = useRef(false);
 
   useEffect(() => {
     const wasRunning = previousStatusRef.current === "running";
@@ -27,11 +29,24 @@ export default function HealthScheduler() {
       const now = Date.now();
       setLastHydrationReminder(now);
       setLastStretchReminder(now);
+      breakTriggeredRef.current = false;
       previousStatusRef.current = status;
+      previousSessionTypeRef.current = sessionType;
       return;
     }
 
+    if (
+      !isRunning &&
+      wasRunning &&
+      previousSessionTypeRef.current === "work" &&
+      !breakTriggeredRef.current
+    ) {
+      triggerBreakReminder();
+      breakTriggeredRef.current = true;
+    }
+
     previousStatusRef.current = status;
+    previousSessionTypeRef.current = sessionType;
 
     if (status !== "running" || sessionType !== "work") {
       return;
@@ -91,6 +106,26 @@ export default function HealthScheduler() {
     addActiveReminder({
       id: healthEvent.id,
       type: "stretch",
+      message,
+      timestamp: Date.now(),
+    });
+
+    // Play sound notification and speak
+    if (!soundManager.isPosturePriorityActive()) {
+      soundManager.playNotification();
+      soundManager.speak(message);
+    }
+  };
+
+  const triggerBreakReminder = () => {
+    const message =
+      "Waktunya istirahat. Berdiri sebentar, tarik napas 3 kali, lalu jalan 1-2 menit biar fokus balik.";
+
+    const healthEvent = createHealthEvent("break", message);
+
+    addActiveReminder({
+      id: healthEvent.id,
+      type: "break",
       message,
       timestamp: Date.now(),
     });

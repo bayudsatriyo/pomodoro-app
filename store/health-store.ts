@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 export interface HealthReminder {
   id: string;
-  type: "posture" | "hydration" | "stretch";
+  type: "posture" | "hydration" | "stretch" | "break";
   message: string;
   timestamp: number;
 }

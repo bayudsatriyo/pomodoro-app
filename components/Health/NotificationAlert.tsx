@@ -60,19 +60,22 @@ export default function NotificationAlert() {
               minWidth: "320px",
               maxWidth: "420px",
               boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
-              border: `2px solid ${
-                reminder.type === "posture"
-                  ? "#ef4444"
-                  : reminder.type === "hydration"
-                  ? "#3b82f6"
-                  : "#22c55e"
-              }`,
+                border: `2px solid ${
+                  reminder.type === "posture"
+                    ? "#ef4444"
+                    : reminder.type === "hydration"
+                    ? "#3b82f6"
+                    : reminder.type === "stretch"
+                    ? "#22c55e"
+                    : "#f59e0b"
+                }`,
             }}
           >
             <div className="notification-icon" style={{ fontSize: "32px", marginBottom: "12px" }}>
               {reminder.type === "posture" && "🧘"}
               {reminder.type === "hydration" && "💧"}
               {reminder.type === "stretch" && "🤸"}
+              {reminder.type === "break" && "⏸️"}
             </div>
 
             <div className="notification-content">
@@ -88,7 +91,9 @@ export default function NotificationAlert() {
                       ? "#ef4444"
                       : reminder.type === "hydration"
                       ? "#3b82f6"
-                      : "#22c55e",
+                      : reminder.type === "stretch"
+                      ? "#22c55e"
+                      : "#f59e0b",
                 }}
               >
                 {reminder.type.toUpperCase()}
@@ -112,7 +117,9 @@ export default function NotificationAlert() {
                       ? "#ef4444"
                       : reminder.type === "hydration"
                       ? "#3b82f6"
-                      : "#22c55e",
+                      : reminder.type === "stretch"
+                      ? "#22c55e"
+                      : "#f59e0b",
                   color: "#fff",
                   border: "none",
                   borderRadius: "6px",
