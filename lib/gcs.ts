@@ -5,13 +5,21 @@ let storage: Storage | null = null;
 
 function normalizeJsonEnv(value: string): string {
   let normalized = value.trim();
+  const quoteChars = ["'", '"', "`"];
 
-  // Common when pasted into env vars: wrap JSON with single/double quotes
-  if (
-    (normalized.startsWith("'") && normalized.endsWith("'")) ||
-    (normalized.startsWith('"') && normalized.endsWith('"'))
-  ) {
-    normalized = normalized.slice(1, -1).trim();
+  let trimmed = true;
+  while (trimmed) {
+    trimmed = false;
+    for (const quote of quoteChars) {
+      if (normalized.startsWith(quote)) {
+        normalized = normalized.slice(1).trim();
+        trimmed = true;
+      }
+      if (normalized.endsWith(quote)) {
+        normalized = normalized.slice(0, -1).trim();
+        trimmed = true;
+      }
+    }
   }
 
   return normalized;
