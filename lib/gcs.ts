@@ -3,12 +3,46 @@ import { config } from "@/config";
 
 let storage: Storage | null = null;
 
+function normalizeJsonEnv(value: string): string {
+  let normalized = value.trim();
+
+  // Common when pasted into env vars: wrap JSON with single/double quotes
+  if (
+    (normalized.startsWith("'") && normalized.endsWith("'")) ||
+    (normalized.startsWith('"') && normalized.endsWith('"'))
+  ) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  return normalized;
+}
+
+function parseCredentials(raw: string) {
+  const normalized = normalizeJsonEnv(raw);
+
+  // If it's JSON already
+  if (normalized.startsWith("{")) {
+    return JSON.parse(normalized);
+  }
+
+  // Otherwise attempt base64 decode (common in CI)
+  const decoded = Buffer.from(normalized, "base64").toString("utf8").trim();
+  const decodedNormalized = normalizeJsonEnv(decoded);
+
+  return JSON.parse(decodedNormalized);
+}
+
 // Initialize GCS client
 function getStorageClient(): Storage {
   if (storage) return storage;
 
   try {
-    const credentials = JSON.parse(config.gcs.credentials);
+    if (!config.gcs.credentials) {
+      throw new Error("Missing GCS_CREDENTIALS");
+    }
+
+    const credentials = parseCredentials(config.gcs.credentials);
+
     storage = new Storage({
       projectId: config.gcs.projectId,
       credentials,
@@ -16,7 +50,9 @@ function getStorageClient(): Storage {
     return storage;
   } catch (error) {
     console.error("Failed to initialize GCS client:", error);
-    throw new Error("GCS client initialization failed");
+    throw new Error(
+      "GCS client initialization failed. Ensure GCS_CREDENTIALS is valid JSON (or base64-encoded JSON) without extra quotes."
+    );
   }
 }
 
