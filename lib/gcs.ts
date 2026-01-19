@@ -25,19 +25,41 @@ function normalizeJsonEnv(value: string): string {
   return normalized;
 }
 
+function extractJson(input: string): string {
+  const start = input.indexOf("{");
+  const end = input.lastIndexOf("}");
+
+  if (start !== -1 && end !== -1 && end > start) {
+    return input.slice(start, end + 1);
+  }
+
+  return input;
+}
+
+function parseJsonWithFallback(input: string) {
+  const cleaned = normalizeJsonEnv(input);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const extracted = extractJson(cleaned);
+    return JSON.parse(extracted);
+  }
+}
+
 function parseCredentials(raw: string) {
   const normalized = normalizeJsonEnv(raw);
 
   // If it's JSON already
-  if (normalized.startsWith("{")) {
-    return JSON.parse(normalized);
+  if (normalized.startsWith("{") || normalized.includes("{\"type\"")) {
+    return parseJsonWithFallback(normalized);
   }
 
   // Otherwise attempt base64 decode (common in CI)
   const decoded = Buffer.from(normalized, "base64").toString("utf8").trim();
   const decodedNormalized = normalizeJsonEnv(decoded);
 
-  return JSON.parse(decodedNormalized);
+  return parseJsonWithFallback(decodedNormalized);
 }
 
 // Initialize GCS client
@@ -57,6 +79,30 @@ function getStorageClient(): Storage {
     });
     return storage;
   } catch (error) {
+    const raw = config.gcs.credentials ?? "";
+    const normalized = normalizeJsonEnv(raw);
+    const decodedAttempt = (() => {
+      try {
+        return Buffer.from(normalized, "base64").toString("utf8").trim();
+      } catch {
+        return "";
+      }
+    })();
+
+    console.error("[GCS] Credentials debug", {
+      rawLength: raw.length,
+      rawStart: raw.slice(0, 3),
+      rawEnd: raw.slice(-3),
+      normalizedStart: normalized.slice(0, 3),
+      normalizedEnd: normalized.slice(-3),
+      normalizedHasJson: normalized.includes("{\"type\"") || normalized.trim().startsWith("{"),
+      decodedLength: decodedAttempt.length,
+      decodedStart: decodedAttempt.slice(0, 3),
+      decodedEnd: decodedAttempt.slice(-3),
+      decodedHasJson:
+        decodedAttempt.includes("{\"type\"") || decodedAttempt.trim().startsWith("{"),
+    });
+
     console.error("Failed to initialize GCS client:", error);
     throw new Error(
       "GCS client initialization failed. Ensure GCS_CREDENTIALS is valid JSON (or base64-encoded JSON) without extra quotes."
